@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  ls-custom-panel-web:
+    container_name: ls-custom-panel-web
+    image: ls-custom-panel
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+    - .:/var/www/html/
+    ports:
+      - "8080:80"
+    tty: true
+    networks:
+      rp-panel:
+        ipv4_address: 192.168.66.2
+  ls-custom-panel-sql:
+    container_name: ls-custom-panel-sql
+    image: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_USER=rp-panel
+      - MYSQL_PASSWORD=test
+      - MYSQL_DATABASE=rp-panel
+    volumes:
+      - ./sql/:/docker-entrypoint-initdb.d
+    networks:
+      rp-panel:
+        ipv4_address: 192.168.66.3
+
+networks:
+  rp-panel:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.66.0/24"
