@@ -1,6 +1,7 @@
 <?php
 include 'config/config.php';
 
+$LoadAllUsers = LoadAllUsers();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,9 +56,7 @@ include 'config/config.php';
                                 </div>
                                 <!-- Card Body -->
                                 <div class="card-body">
-                                    <div class="chart-area">
-                                        
-                                    </div>
+                                    <?php var_dump($_SESSION); ?>
                                 </div>
                             </div>
                         </div>

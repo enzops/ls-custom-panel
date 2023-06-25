@@ -6,6 +6,10 @@ function login(){
     global $DB_DSN;
     global $err;
 
+    if($_SESSION["loggedin"] == true) {
+        header('location: index.php');
+    };
+
     if($_SERVER["REQUEST_METHOD"] == "POST"){
         $userEmail = $_POST["userEmail"];
         $userPassword = $_POST["userPassword"];
@@ -61,17 +65,16 @@ function login(){
 
                                 $_SESSION["userFirstName"] = $userData['firstName'];
                                 $_SESSION["userLastName"] = $userData['lastName'];
-                                $_SESSION["UserLevel"] = $userData['UserLevel'];
-                                $_SESSION["UserPhone"] = $userData['UserPhone'];
-                                $_SESSION["UserAdmin"] = $userData['UserAdmin'];
+                                $_SESSION["userEmail"] = $userData['email'];
+                                $_SESSION["userAdmin"] = $userData['admin'];
+                                $_SESSION["userPhone"] = $userData['phone'];
+                                $_SESSION["userLevel"] = $userData['level'];
 
                                 // Set CSRF Token
                                 $token = md5(uniqid(mt_rand(), true));
                                 $_SESSION["csrf"] = $token;
                                 UpdateUserData($id, $token);
-
-                                // Redirect user to welcome page
-                                header("location: index.php");
+                                echo '<script>window.location = "index.php"; </script>';
                             } else{
                                 // Password is not valid, display a generic error message
                                 $err = "Invalid username or password.";

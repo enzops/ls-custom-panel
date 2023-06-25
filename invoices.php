@@ -4,18 +4,33 @@ include 'config/config.php';
 // ADD PRODUCT
 if (isset($_POST['submitadd'])) {
     if (!hash_equals($_SESSION['csrf'], $_POST['csrf'])) die();
+    $nomsProduits = $_POST['nom_produit'];
+    $prixProduits = $_POST['prix_produit'];
+    $produits = [];
+    foreach ($nomsProduits as $index => $nomProduit) {
+        $prixProduit = $prixProduits[$index];
+        // Vérifier si le produit a un nom et un prix valides
+        if (!empty($nomProduit) && !empty($prixProduit)) {
+            $produits[] = [
+                'nom_produit' => $nomProduit,
+                'prix_produit' => $prixProduit
+            ];
+        }
+    }
+    $ProductsJSON = json_encode($produits);
 
-    $ProductAdd = [
-        "product_category"          => $_POST['product_category'],
-        "product_name"              => $_POST['product_name'],
-        "product_description"       => $_POST['product_description'],
-        "product_price"             => $_POST['product_price']
+    $InvoiceAdd = [
+        "invoice_customerfirstname"          => $_POST['invoice_customerfirstname'],
+        "invoice_customerLastName"              => $_POST['invoice_customerLastName'],
+        "invoice_employee"       => $_POST['invoice_employee'],
+        "invoice_description"             => $_POST['invoice_description'],
+        "invoice_price"             => $_POST['invoice_price'],
     ];
 
-    $sqlAddProduct = "INSERT INTO products (category, name, description, price) VALUES (:product_category, :product_name, :product_description, :product_price)";
+    $sqlAddProduct = "INSERT INTO invoices (customerFirstName, customerLastName, employee, description, price, products) VALUES (:invoice_customerfirstname, :invoice_customerLastName, :invoice_employee, :invoice_description, :invoice_price, '$ProductsJSON')";
 
     $statement = $DB_DSN->prepare($sqlAddProduct);
-    if ($statement->execute($ProductAdd)) {
+    if ($statement->execute($InvoiceAdd)) {
         // Update successful
         $message = "User information edited.";
         $messagetype = "success";
@@ -31,17 +46,17 @@ if (isset($_POST['submitadd'])) {
 }
 // EDIT PRODUCT
 if (isset($_GET['edit']) and isset($_GET['id'])) {
-    $DataRow = LoadDataRow('products', 'id', $_GET['id']);
+    $DataRow = LoadDataRow('invoices', 'id', $_GET['id']);
 
     if (isset($_POST['submitedit'])) {
         if (!hash_equals($_SESSION['csrf'], $_POST['csrf'])) die();
 
         $Product = [
-            "product_id"                => $_POST['product_id'],
-            "product_category"          => $_POST['product_category'],
-            "product_name"              => $_POST['product_name'],
-            "product_description"       => $_POST['product_description'],
-            "product_price"             => $_POST['product_price']
+            "invoice_customerfirstname"     => $_POST['invoice_customerfirstname'],
+            "invoice_customerLastName"      => $_POST['invoice_customerLastName'],
+            "invoice_employee"              => $_POST['invoice_employee'],
+            "invoice_description"           => $_POST['invoice_description'],
+            "invoice_price"                 => $_POST['invoice_price'],
         ];
 
         $sql = "UPDATE products
@@ -68,20 +83,19 @@ if (isset($_GET['edit']) and isset($_GET['id'])) {
         }
     }
 }
-
 // DELETE PRODUCT
 if (isset($_GET['delete']) and isset($_GET['id'])) {
 
     $id = $_GET['id'];
 
-    $sql = "DELETE FROM products WHERE id = :id";
+    $sql = "DELETE FROM invoices WHERE id = :id";
 
     $statement = $DB_DSN->prepare($sql);
     $statement->bindValue(':id', $id);
     $statement->execute();
 
     if ($statement) {
-        LoadDataRow('products', 'id', $_GET['id']);
+        LoadDataRow('invoices', 'id', $_GET['id']);
         $message = "User deleted.";
         $messagetype = "success";
     }
@@ -122,7 +136,7 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Products</h1>
+                    <h1 class="h3 mb-2 text-gray-800">Invoices</h1>
 
                     <!-- Add view -->
                     <?php if (isset($_GET['add'])) : ?>
@@ -132,36 +146,65 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                 <div class="card-header">Edit product</div>
                                 <div class="card-body">
                                     <form method="post">
-                                        <!-- Form Row-->
                                         <div class="row gx-3 mb-3">
                                             <!-- Form Group (first name)-->
                                             <div class="col-md-6">
-                                                <label class="small mb-1" for="product_name">Name</label>
-                                                <input class="form-control" id="product_name" type="text" placeholder="product name" name="product_name" value="">
+                                                <label class="small mb-1" for="invoice_customerfirstname">Customer first name</label>
+                                                <input class="form-control" type="text" id="invoice_customerfirstname" name="invoice_customerfirstname" required>
                                             </div>
                                             <!-- Form Group (last name)-->
                                             <div class="col-md-6">
-                                                <label class="small mb-1" for="product_category">Category</label>
-                                                <input class="form-control" id="product_category" type="text" placeholder="product category" name="product_category" value="">
+                                                <label class="small mb-1" for="invoice_customerLastName">Customer last name</label>
+                                                <input class="form-control" id="invoice_customerLastName" type="text" name="invoice_customerLastName" required>
+                                            </div>
+                                            <!-- Form Group (last name)-->
+                                            <div class="col-md-6">
+                                                <label class="small mb-1" for="invoice_employee">Employee</label>
+                                                <select class="form-select" name="invoice_employee" required>
+                                                    <option selected>Selectionnez l'employé</option>
+                                                    <?php
+                                                    $AllUsers = LoadAllUsers();
+                                                    foreach ($AllUsers as $User) :
+                                                    ?>
+                                                        <option value="<?php echo $User['firstName']; ?> <?php echo $User['lastName']; ?>"><?php echo $User['firstName']; ?> <?php echo $User['lastName']; ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
                                             </div>
                                         </div>
                                         <!-- Form Group (email address)-->
                                         <div class="mb-3">
-                                            <label class="small mb-1" for="product_description">Description</label>
-                                            <textarea class="form-control" id="product_description" type="description" placeholder="product description" name="product_description" value="" rows="2"></textarea>
+                                            <label class="small mb-1" for="invoice_description">Description</label>
+                                            <textarea class="form-control" id="invoice_description" type="textarea" name="invoice_description" rows="2"></textarea>
                                         </div>
                                         <!-- Form Row-->
                                         <div class="row gx-3 mb-3">
                                             <!-- Form Group (phone number)-->
                                             <div class="col-md-2">
-                                                <label class="small mb-1" for="product_price">Price</label>
-                                                <input class="form-control" id="product_price" type="price" placeholder="product price" name="product_price" value="">
+                                                <label class="small mb-1" for="invoice_price">Price</label>
+                                                <input class="form-control" id="invoice_price" type="number" name="invoice_price">
+                                            </div>
+                                            <div class="col-md-6">
                                                 <input name="csrf" type="hidden" value="<?= $_SESSION['csrf'] ?>">
                                             </div>
                                         </div>
-                                        <!-- Save changes button-->
-                                        <button class="btn btn-primary" name="submitadd" type="submit"><i class="fas fa-save"></i> Save changes</button>
-                                        <a class="btn btn-warning" href="products.php" role="button"><i class="fa fa-times"></i> Abort</a>
+
+                                        <h2>Produits</h2>
+
+                                        <div id="produits">
+                                            <div class="row gx-3 mb-3">
+                                                <div class="col-md-2">
+                                                    <label for="nom_produit_1" class="form-label">Nom du produit</label>
+                                                    <input type="text" class="form-control" id="nom_produit_1" name="nom_produit[]" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label for="prix_produit_1" class="form-label">Prix du produit</label>
+                                                    <input type="number" class="form-control" id="prix_produit_1" name="prix_produit[]" required>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" class="btn btn-primary mb-3" onclick="ajouterProduit()">Ajouter un produit</button>
+                                        <button type="submit" name="submitadd" class="btn btn-success">Créer la facture</button>
                                     </form>
                                 </div>
                             </div>
@@ -215,9 +258,9 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                     <?php else : ?>
                         <div class="card shadow mb-4">
                             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">Liste des produits</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">Liste factures</h6>
                                 <div class="dropdown no-arrow">
-                                    <a class="dropdown-toggle" href="products.php?add" role="button">
+                                    <a class="dropdown-toggle" href="<?php $_SERVER['PHP_SELF']; ?>?add" role="button">
                                         <i class="fas fa-plus fa-sm fa-fw"></i>
                                     </a>
                                 </div>
@@ -228,8 +271,8 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
-                                                <th>Catégorie</th>
-                                                <th>Nom</th>
+                                                <th>Client</th>
+                                                <th>Employé</th>
                                                 <th>Description</th>
                                                 <th>Prix</th>
                                                 <th>Actions</th>
@@ -238,8 +281,8 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                         <tfoot>
                                             <tr>
                                                 <th>ID</th>
-                                                <th>Catégorie</th>
-                                                <th>Nom</th>
+                                                <th>Client</th>
+                                                <th>Employé</th>
                                                 <th>Description</th>
                                                 <th>Prix</th>
                                                 <th>Actions</th>
@@ -247,18 +290,18 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                         </tfoot>
                                         <tbody>
                                             <?php
-                                            LoadAllRows('products');
+                                            LoadAllRows('invoices');
                                             foreach ($AllRows as $product) :
                                             ?>
                                                 <tr>
                                                     <td><?php echo $product["id"]; ?></td>
-                                                    <td><?php echo $product["category"]; ?></td>
-                                                    <td><?php echo $product["name"]; ?></td>
+                                                    <td><?php echo $product["customerFirstName"]; ?> <?php echo $product["customerLastName"]; ?></td>
+                                                    <td><?php echo $product["employee"]; ?></td>
                                                     <td><?php echo $product["description"]; ?></td>
                                                     <td><?php echo $product["price"]; ?></td>
                                                     <td>
-                                                        <a href="products.php?edit&id=<?php echo ($product["id"]); ?>" class="btn btn-outline-warning btn-sm"><i class="fas fa-pen"></i> Edit</a>
-                                                        <a href="products.php?delete&id=<?php echo ($product["id"]); ?>" class="btn btn-outline-danger btn-sm"><i class="fas fa-times"></i> Delete</a>
+                                                        <a href="invoices.php?edit&id=<?php echo ($product["id"]); ?>" class="btn btn-outline-info btn-sm"><i class="fas fa-pen"></i> Edit</a>
+                                                        <a href="invoices.php?delete&id=<?php echo ($product["id"]); ?>" class="btn btn-outline-danger btn-sm"><i class="fas fa-times"></i> Delete</a>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -268,7 +311,7 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                             </div>
                         </div>
                     <?php endif ?>
-                    
+
                 </div>
                 <!-- /.container-fluid -->
 
@@ -297,7 +340,7 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
     </a>
 
     <!-- Logout Modal-->
-    
+
 
     <!-- Bootstrap core JavaScript-->
     <script src="assets/vendor/jquery/jquery.min.js"></script>
@@ -315,6 +358,32 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
 
     <!-- Page level custom scripts -->
     <script src="assets/js/demo/datatables-demo.js"></script>
+
+    <script>
+        let compteurProduits = 1;
+
+        function ajouterProduit() {
+            compteurProduits++;
+
+            const produitsDiv = document.getElementById('produits');
+
+            const produitHTML = `
+      <div class="mb-3">
+        <label for="nom_produit_${compteurProduits}" class="form-label">Nom du produit</label>
+        <input type="text" class="form-control" id="nom_produit_${compteurProduits}" name="nom_produit[]" required>
+      </div>
+      <div class="mb-3">
+        <label for="prix_produit_${compteurProduits}" class="form-label">Prix du produit</label>
+        <input type="number" class="form-control" id="prix_produit_${compteurProduits}" name="prix_produit[]" required>
+      </div>
+    `;
+
+            const produitDiv = document.createElement('div');
+            produitDiv.innerHTML = produitHTML;
+
+            produitsDiv.appendChild(produitDiv);
+        }
+    </script>
 
 </body>
 
