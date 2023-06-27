@@ -112,6 +112,8 @@ function LoadAllRows($table)
   $LoadAllRows = $DB_DSN->prepare("SELECT * FROM $table");
   $LoadAllRows->execute();
   $AllRows = $LoadAllRows->fetchAll();
+
+  return $AllRows;
 }
 
 function LoadAllUsers()
@@ -128,4 +130,28 @@ function LoadAllUsers()
   $AllRows = $LoadAllUsers->fetchAll();
 
   return $AllRows;
+}
+
+function LimitToAdmins($redirect)
+{
+  if (!isset($_SESSION['userAdmin']) || $_SESSION['userAdmin'] == false) {
+    if (isset($redirect)) {
+      header('location: '.$redirect);
+    }
+    return false;
+  } else {
+    return true;
+  };
+}
+
+function LimitToUsers($redirect)
+{
+  if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] == false) {
+    if (isset($redirect)) {
+      header('location: '.$redirect);
+    }
+    return false;
+  } else {
+    return true;
+  };
 }

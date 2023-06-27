@@ -6,14 +6,17 @@ if (isset($_POST['submitadd'])) {
     if (!hash_equals($_SESSION['csrf'], $_POST['csrf'])) die();
     $nomsProduits = $_POST['nom_produit'];
     $prixProduits = $_POST['prix_produit'];
+    $quantiteProduits = $_POST['quantite_produit'];
     $produits = [];
     foreach ($nomsProduits as $index => $nomProduit) {
         $prixProduit = $prixProduits[$index];
-        // Vérifier si le produit a un nom et un prix valides
-        if (!empty($nomProduit) && !empty($prixProduit)) {
+        $quantiteProduit = $quantiteProduits[$index];
+        // Vérifier si le produit a un nom, un prix et une quantité valides
+        if (!empty($nomProduit) && !empty($prixProduit) && !empty($quantiteProduit)) {
             $produits[] = [
                 'nom_produit' => $nomProduit,
-                'prix_produit' => $prixProduit
+                'prix_produit' => $prixProduit,
+                'quantity' => $quantiteProduit
             ];
         }
     }
@@ -100,6 +103,10 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
         $messagetype = "success";
     }
 }
+
+$allProducts = LoadAllRows('products');
+
+var_dump($allProducts);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -157,10 +164,11 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                                 <label class="small mb-1" for="invoice_customerLastName">Customer last name</label>
                                                 <input class="form-control" id="invoice_customerLastName" type="text" name="invoice_customerLastName" required>
                                             </div>
-                                            <!-- Form Group (last name)-->
+                                        </div>
+                                        <div class="row gx-3 mb-3">
                                             <div class="col-md-6">
                                                 <label class="small mb-1" for="invoice_employee">Employee</label>
-                                                <select class="form-select" name="invoice_employee" required>
+                                                <select class="form-control" name="invoice_employee" required>
                                                     <option selected>Selectionnez l'employé</option>
                                                     <?php
                                                     $AllUsers = LoadAllUsers();
@@ -189,22 +197,14 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                         </div>
 
                                         <h2>Produits</h2>
+                                        
+                                        <div id="champs-produits"></div>
 
-                                        <div id="produits">
-                                            <div class="row gx-3 mb-3">
-                                                <div class="col-md-2">
-                                                    <label for="nom_produit_1" class="form-label">Nom du produit</label>
-                                                    <input type="text" class="form-control" id="nom_produit_1" name="nom_produit[]" required>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label for="prix_produit_1" class="form-label">Prix du produit</label>
-                                                    <input type="number" class="form-control" id="prix_produit_1" name="prix_produit[]" required>
-                                                </div>
-                                            </div>
+                                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
+                                            <button type="button" class="btn btn-primary" onclick="showDBProducts()">Ajouter un produit pré-enregistré</button>
+                                            <button type="button" class="btn btn-primary" id="ajouter-produit">Ajouter un produit</button>
+                                            <button type="submit" name="submitadd" class="btn btn-success">Créer la facture</button>
                                         </div>
-
-                                        <button type="button" class="btn btn-primary mb-3" onclick="ajouterProduit()">Ajouter un produit</button>
-                                        <button type="submit" name="submitadd" class="btn btn-success">Créer la facture</button>
                                     </form>
                                 </div>
                             </div>
@@ -360,30 +360,93 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
     <script src="assets/js/demo/datatables-demo.js"></script>
 
     <script>
-        let compteurProduits = 1;
+        // Récupérer le bouton "Ajouter un produit" et la section des champs produits
+        var boutonAjouterProduit = document.getElementById("ajouter-produit");
+        var champsProduits = document.getElementById("champs-produits");
 
+        // Compteur pour les identifiants uniques des champs d'entrée
+        var compteurProduit = 0;
+
+        // Fonction pour ajouter les champs d'entrée pour un produit
         function ajouterProduit() {
-            compteurProduits++;
+            compteurProduit++;
 
-            const produitsDiv = document.getElementById('produits');
+            // Créer les éléments de champ d'entrée pour le produit
+            var divProduit = document.createElement("div");
+            divProduit.classList.add("row", "gx-3", "mb-3");
 
-            const produitHTML = `
-      <div class="mb-3">
-        <label for="nom_produit_${compteurProduits}" class="form-label">Nom du produit</label>
-        <input type="text" class="form-control" id="nom_produit_${compteurProduits}" name="nom_produit[]" required>
-      </div>
-      <div class="mb-3">
-        <label for="prix_produit_${compteurProduits}" class="form-label">Prix du produit</label>
-        <input type="number" class="form-control" id="prix_produit_${compteurProduits}" name="prix_produit[]" required>
-      </div>
-    `;
+            var divCol1 = document.createElement("div");
+            divCol1.classList.add("col-md-4");
 
-            const produitDiv = document.createElement('div');
-            produitDiv.innerHTML = produitHTML;
+            var inputNomProduit = document.createElement("input");
+            inputNomProduit.classList.add("form-control");
+            inputNomProduit.type = "text";
+            inputNomProduit.name = "nom_produit[]";
+            inputNomProduit.placeholder = "Nom du produit";
+            inputNomProduit.required = true;
 
-            produitsDiv.appendChild(produitDiv);
+            divCol1.appendChild(inputNomProduit);
+            divProduit.appendChild(divCol1);
+
+            // Créer les éléments de champ d'entrée pour le prix
+            var divCol2 = document.createElement("div");
+            divCol2.classList.add("col-md-4");
+
+            var inputPrixProduit = document.createElement("input");
+            inputPrixProduit.classList.add("form-control");
+            inputPrixProduit.type = "number";
+            inputPrixProduit.name = "prix_produit[]";
+            inputPrixProduit.placeholder = "Prix du produit";
+            inputPrixProduit.required = true;
+
+            divCol2.appendChild(inputPrixProduit);
+            divProduit.appendChild(divCol2);
+
+            // Créer les éléments de champ d'entrée pour la quantité
+            var divCol3 = document.createElement("div");
+            divCol3.classList.add("col-md-4");
+
+            var inputQuantiteProduit = document.createElement("input");
+            inputQuantiteProduit.classList.add("form-control");
+            inputQuantiteProduit.type = "number";
+            inputQuantiteProduit.name = "quantite_produit[]";
+            inputQuantiteProduit.placeholder = "Quantité du produit";
+            inputQuantiteProduit.required = true;
+
+            divCol3.appendChild(inputQuantiteProduit);
+            divProduit.appendChild(divCol3);
+
+            // Ajouter les champs d'entrée pour le produit à la section des champs produits
+            champsProduits.appendChild(divProduit);
         }
+
+        // Ajouter un gestionnaire d'événement de clic sur le bouton "Ajouter un produit"
+        boutonAjouterProduit.addEventListener("click", ajouterProduit);
+
+        // Fonction pour calculer le total et l'afficher dans l'input "invoice_price"
+        function calculerTotal() {
+            var inputsPrix = document.querySelectorAll('input[name="prix_produit[]"]');
+            var inputsQuantite = document.querySelectorAll('input[name="quantite_produit[]"]');
+            var total = 0;
+
+            for (var i = 0; i < inputsPrix.length; i++) {
+                var prix = parseFloat(inputsPrix[i].value);
+                var quantite = parseInt(inputsQuantite[i].value);
+
+                if (!isNaN(prix) && !isNaN(quantite)) {
+                    total += prix * quantite;
+                }
+            }
+
+            var inputTotal = document.getElementById("invoice_price");
+            inputTotal.value = total.toFixed(2);
+        }
+
+        // Ajouter un gestionnaire d'événement de changement pour les champs de prix et de quantité
+        champsProduits.addEventListener("change", calculerTotal);
     </script>
+
+
 
 </body>
 
