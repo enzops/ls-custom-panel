@@ -84,15 +84,15 @@ function interventiondossier()
 function LoadWebsiteSettings()
 {
   global $DB_DSN;
-  global $WEBSITE_SETTINGS_LANG;
+  global $WEBSITE_SETTINGS_MARGIN;
   global $WEBSITE_SETTINGS_NAME;
 
   $LoadWebsiteSettings = $DB_DSN->prepare("SELECT * FROM settings");
   $LoadWebsiteSettings->execute();
   $WebsiteSettings = $LoadWebsiteSettings->fetchAll();
 
-  $WEBSITE_SETTINGS_LANG = $WebsiteSettings[0]['name'];
-  // $WEBSITE_SETTINGS_NAME = $WebsiteSettings[0]['shoptype'];
+  $WEBSITE_SETTINGS_NAME = $WebsiteSettings[0]['name'];
+  $WEBSITE_SETTINGS_MARGIN = $WebsiteSettings[0]['margin'];
   // $WEBSITE_SETTINGS_NAME = $WebsiteSettings[0]['lang'];
 
   // require("inc/langs/$WEBSITE_SETTINGS_LANG.php");

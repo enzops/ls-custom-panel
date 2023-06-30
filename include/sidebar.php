@@ -55,7 +55,7 @@
     <li class="nav-item <?php if ($currentFile === 'invoices.php') echo 'active'; ?>">
         <a class="nav-link" href="invoices.php">
             <i class="fas fa-fw fa-file-invoice"></i>
-            <span>Création facture</span></a>
+            <span>Facturation</span></a>
     </li>
 
     <!-- Nav Item - Charts -->
