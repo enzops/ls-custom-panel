@@ -33,31 +33,42 @@ if (isset($_POST['submitadd'])) {
 }
 // EDIT PRODUCT
 if (isset($_GET['edit']) and isset($_GET['id'])) {
-    $DataRow = LoadDataRow('products', 'id', $_GET['id']);
+    $DataRow = LoadDataRow('users', 'id', $_GET['id']);
 
     if (isset($_POST['submitedit'])) {
         if (!hash_equals($_SESSION['csrf'], $_POST['csrf']))
             die();
 
-        $Product = [
-            "product_id" => $_POST['product_id'],
-            "product_category" => $_POST['product_category'],
-            "product_name" => $_POST['product_name'],
-            "product_description" => $_POST['product_description'],
-            "product_price" => $_POST['product_price']
+        $userStatus = isset($_POST['user_status']) ? intval($_POST['user_status']) : 0;
+
+        $userAdmin = isset($_POST['user_admin']) ? intval($_POST['user_admin']) : 0;
+
+
+        $User = [
+            "user_id" => $_POST['user_id'],
+            "user_email" => $_POST['user_email'],
+            "user_firstname" => $_POST['user_firstname'],
+            "user_lastname" => $_POST['user_lastname'],
+            "user_level" => $_POST['user_level'],
+            "user_status" => $userStatus,
+            "user_admin" => $userAdmin,
+            "user_phone" => $_POST['user_phone']
         ];
 
-        $sql = "UPDATE products
-        SET category = :product_category,
-            name = :product_name,
-            description = :product_description,
-            price = :product_price
-        WHERE id = :product_id";
+        $sql = "UPDATE users
+        SET email = :user_email,
+            firstName = :user_firstname,
+            lastName = :user_lastname,
+            level = :user_level,
+            phone = :user_phone,
+            active = :user_status,
+            admin = :user_admin
+        WHERE id = :user_id";
 
         $statement = $DB_DSN->prepare($sql);
-        if ($statement->execute($Product)) {
+        if ($statement->execute($User)) {
             // Update successful
-            LoadDataRow('products', 'id', $_GET['id']);
+            LoadDataRow('users', 'id', $_GET['id']);
             $message = "User information edited.";
             $messagetype = "success";
             header('Location: ' . $_SERVER['PHP_SELF']);
@@ -127,7 +138,7 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Products</h1>
+                    <h1 class="h3 mb-2 text-gray-800">Utilisateurs</h1>
 
                     <!-- Add view -->
                     <?php if (isset($_GET['add'])): ?>
@@ -183,54 +194,85 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                         <div class="col-xl-8">
                             <!-- Account details card-->
                             <div class="card mb-4">
-                                <div class="card-header">Edit product</div>
+                                <div class="card-header"></div>
                                 <div class="card-body">
                                     <form method="post">
-                                        <!-- Form Row-->
                                         <div class="row gx-3 mb-3">
-                                            <!-- Form Group (first name)-->
+                                            <!-- Email -->
                                             <div class="col-md-6">
-                                                <label class="small mb-1" for="product_name">Name</label>
-                                                <input class="form-control" id="product_name" type="text"
-                                                    placeholder="product name" name="product_name"
-                                                    value="<?php echo $DataRow['name']; ?>">
-                                            </div>
-                                            <!-- Form Group (last name)-->
-                                            <div class="col-md-6">
-                                                <label class="small mb-1" for="product_category">Category</label>
-                                                <input class="form-control" id="product_category" type="text"
-                                                    placeholder="product category" name="product_category"
-                                                    value="<?php echo $DataRow['category']; ?>">
+                                                <label class="small mb-1" for="user_email">Email</label>
+                                                <input class="form-control" id="user_email" type="text" placeholder="Email"
+                                                    name="user_email" value="<?php echo $DataRow['email']; ?>">
                                             </div>
                                         </div>
-                                        <!-- Form Group (email address)-->
-                                        <div class="mb-3">
-                                            <label class="small mb-1" for="product_description">Description</label>
-                                            <textarea class="form-control" id="product_description" type="description"
-                                                placeholder="product description" name="product_description"
-                                                value="<?php echo $DataRow['description']; ?>" rows="2"></textarea>
-                                        </div>
-                                        <!-- Form Row-->
                                         <div class="row gx-3 mb-3">
-                                            <!-- Form Group (phone number)-->
-                                            <div class="col-md-2">
-                                                <label class="small mb-1" for="product_price">Price</label>
-                                                <input class="form-control" id="product_price" type="price"
-                                                    placeholder="product price" name="product_price"
-                                                    value="<?php echo $DataRow['price']; ?>">
-                                            </div>
+                                            <!-- First Name -->
                                             <div class="col-md-6">
-                                                <input type="hidden" class="form-control" id="product_id" type="int"
-                                                    placeholder="product id" name="product_id"
-                                                    value="<?php echo $DataRow['id']; ?>">
-                                                <input name="csrf" type="hidden" value="<?= $_SESSION['csrf'] ?>">
+                                                <label class="small mb-1" for="user_firstname">First name</label>
+                                                <input class="form-control" id="user_firstname" type="text"
+                                                    placeholder="First name" name="user_firstname"
+                                                    value="<?php echo $DataRow['firstName']; ?>">
+                                            </div>
+                                            <!-- Last Name -->
+                                            <div class="col-md-6">
+                                                <label class="small mb-1" for="user_lastname">Last name</label>
+                                                <input class="form-control" id="user_lastname" type="text"
+                                                    placeholder="Last name" name="user_lastname"
+                                                    value="<?php echo $DataRow['lastName']; ?>">
                                             </div>
                                         </div>
-                                        <!-- Save changes button-->
-                                        <button class="btn btn-primary" name="submitedit" type="submit"><i
-                                                class="fas fa-save"></i> Save changes</button>
-                                        <a class="btn btn-warning" href="products.php" role="button"><i
-                                                class="fa fa-times"></i> Abort</a>
+                                        <div class="row gx-3 mb-3">
+                                            <!-- Level -->
+                                            <div class="col-md-6">
+                                                <label class="small mb-1" for="user_level">Level</label>
+                                                <input class="form-control" id="user_level" type="text" placeholder="Level"
+                                                    name="user_level" value="<?php echo $DataRow['level']; ?>">
+                                            </div>
+                                            <!-- Phone -->
+                                            <div class="col-md-6">
+                                                <label class="small mb-1" for="user_phone">Phone</label>
+                                                <input class="form-control" id="user_phone" type="text" placeholder="Phone"
+                                                    name="user_phone" value="<?php echo $DataRow['phone']; ?>">
+                                            </div>
+                                        </div>
+                                        <!-- Account Active -->
+                                        <div class="form-group">
+                                            <div class="custom-control custom-checkbox small">
+                                                <input class="custom-control-input" type="checkbox" id="user_status"
+                                                    name="user_status" value="1" <?php if ($DataRow['active']): ?> checked
+                                                    <?php endif; ?>>
+                                                <label class="custom-control-label" for="user_status">Account active
+                                                </label>
+                                            </div>
+
+
+                                            <!-- Admin Status -->
+                                            <div class="form-group">
+                                                <div class="custom-control custom-checkbox small">
+                                                    <input class="custom-control-input" type="checkbox" id="user_admin"
+                                                        name="user_admin" value="1" <?php if ($DataRow['admin']): ?> checked
+                                                        <?php endif; ?>>
+                                                    <label class="custom-control-label" for="user_admin">Admin Status
+                                                    </label>
+                                                </div>
+
+                                            </div>
+                                            <!-- Form Row-->
+                                            <div class="row gx-3 mb-3">
+
+                                                <div class="col-md-6">
+                                                    <input type="hidden" class="form-control" id="user_id" type="int"
+                                                        placeholder="ID" name="user_id"
+                                                        value="<?php echo $DataRow['id']; ?>">
+                                                    <input name="csrf" type="hidden" value="<?= $_SESSION['csrf'] ?>">
+                                                </div>
+                                            </div>
+                                            <!-- Save changes button-->
+                                            <button class="btn btn-primary" name="submitedit" type="submit"><i
+                                                    class="fas fa-pen"></i> Edit</button>
+                                            <a class="btn btn-warning"
+                                                href="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>"
+                                                role="button"><i class="fa fa-times"></i> Abort</a>
                                     </form>
                                 </div>
                             </div>
@@ -239,9 +281,10 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                     <?php else: ?>
                         <div class="card shadow mb-4">
                             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">Liste des produits</h6>
+                                <h6 class="m-0 font-weight-bold text-primary"></h6>
                                 <div class="dropdown no-arrow">
-                                    <a class="dropdown-toggle" href="products.php?add" role="button">
+                                    <a class="dropdown-toggle"
+                                        href="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>?add" role="button">
                                         <i class="fas fa-plus fa-sm fa-fw"></i>
                                     </a>
                                 </div>
@@ -307,11 +350,14 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                                     </td>
                                                     <td>
                                                         <a href="users.php?edit&id=<?php echo ($user["id"]); ?>"
-                                                            class="btn btn-outline-warning btn-sm"><i class="fas fa-pen"></i>
-                                                            Edit</a>
+                                                            class="btn btn-outline-warning btn-sm"><i
+                                                                class="fas fa-pen"></i></a>
+                                                        <a href="users.php?editpw&id=<?php echo ($user["id"]); ?>"
+                                                            class="btn btn-outline-primary btn-sm"><i
+                                                                class="fas fa-key"></i></a>
                                                         <a href="users.php?delete&id=<?php echo ($user["id"]); ?>"
-                                                            class="btn btn-outline-danger btn-sm"><i class="fas fa-times"></i>
-                                                            Delete</a>
+                                                            class="btn btn-outline-danger btn-sm"><i
+                                                                class="fas fa-times"></i></a>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
