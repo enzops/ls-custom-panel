@@ -30,8 +30,9 @@ CREATE TABLE `invoices` (
   `products` json DEFAULT NULL,
   `description` varchar(255) DEFAULT NULL,
   `price` smallint DEFAULT NULL,
+  `date` date DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -40,7 +41,7 @@ CREATE TABLE `invoices` (
 
 LOCK TABLES `invoices` WRITE;
 /*!40000 ALTER TABLE `invoices` DISABLE KEYS */;
-INSERT INTO `invoices` VALUES (4,'first','name','Enzo test','[{\"nom_produit\": \"test1\", \"prix_produit\": \"1\"}, {\"nom_produit\": \"test1\", \"prix_produit\": \"1\"}, {\"nom_produit\": \"test2\", \"prix_produit\": \"2\"}]','tst',11),(5,'first','name','Enzo test','[{\"quantity\": \"1\", \"nom_produit\": \"test1\", \"prix_produit\": \"1\"}]','test',1),(6,'first','name','Enzo test','[{\"quantity\": \"1\", \"nom_produit\": \"test1\", \"prix_produit\": \"10\"}, {\"quantity\": \"2\", \"nom_produit\": \"test2\", \"prix_produit\": \"20\"}, {\"quantity\": \"3\", \"nom_produit\": \"test3\", \"prix_produit\": \"30\"}]','test',140),(7,'Sarah','Croche','Enzo test','[{\"quantity\": \"2\", \"nom_produit\": \"Tuning de bz\", \"prix_produit\": \"100\"}, {\"quantity\": \"1\", \"nom_produit\": \"Reprog stage 2\", \"prix_produit\": \"200\"}]','description',400);
+INSERT INTO `invoices` VALUES (32,'Sarah','Croche','Enzo test','[{\"quantity\": \"5\", \"nom_produit\": \"test1\", \"prix_produit\": \"200\"}]','desc',1500,NULL),(33,'Sarah','Croche','Enzo test','[{\"quantity\": \"6\", \"nom_produit\": \"test\", \"prix_produit\": \"38\"}, {\"quantity\": \"4\", \"nom_produit\": \"test1\", \"prix_produit\": \"19\"}]','test',456,NULL),(34,'Sarah','Croche','Enzo test','[{\"quantity\": \"8\", \"nom_produit\": \"Tuning de bz\", \"prix_produit\": \"3\"}]','desc',36,'2004-07-23'),(35,'Sarah','Croche','Enzo test','[{\"quantity\": \"8\", \"nom_produit\": \"test1\", \"prix_produit\": \"7\"}]','szqx',84,'2023-07-04');
 /*!40000 ALTER TABLE `invoices` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -83,6 +84,8 @@ CREATE TABLE `settings` (
   `name` varchar(255) DEFAULT NULL,
   `shoptype` varchar(45) DEFAULT NULL,
   `lang` varchar(45) DEFAULT 'fr',
+  `margin` int DEFAULT NULL,
+  `discordwebhook` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -93,7 +96,7 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES (0,'Los Santos Custom','custom','fr');
+INSERT INTO `settings` VALUES (0,'Los Santos Custom','custom','fr',50,'');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -113,12 +116,12 @@ CREATE TABLE `users` (
   `active` int NOT NULL DEFAULT '0',
   `admin` int NOT NULL DEFAULT '0',
   `phone` varchar(45) DEFAULT NULL,
-  `level` int DEFAULT NULL,
+  `level` varchar(45) DEFAULT NULL,
   `token` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   UNIQUE KEY `email_UNIQUE` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -127,7 +130,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (9,'test@test.com','Enzo','test','$2y$10$5.MZlAG5W9g621DC4tlcUuY1hDXzdrMWgeeUvUa5srRsrb0o0YxLq',1,1,NULL,NULL,'4918f32d67284399fb88e306d32f9ec0');
+INSERT INTO `users` VALUES (9,'test@test.com','Enzo','test','$2y$10$5.MZlAG5W9g621DC4tlcUuY1hDXzdrMWgeeUvUa5srRsrb0o0YxLq',1,1,NULL,NULL,'cfacac00ba286d20090ddf276afad58c'),(11,'test@test2.com','test','test','$2y$10$NGx1CqHHTbW.SnYjKFG6/.R5m7gEKp37a1nK77ZCiRUsMBRW8ng36',1,0,'666666','','ef1968d3884835a75c39056aa5cadf4d');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -140,4 +143,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-06-28 21:15:05
+-- Dump completed on 2023-07-04 20:09:56

@@ -59,8 +59,7 @@ function login(){
                                     session_unset();
                                     session_destroy();
                                     $err = "Votre compte est désactivé";
-                                    header("Location: login.php?error=".urlencode($err));
-                                    exit();
+                                    exit(header("Location: login.php?error=".urlencode($err)));
                                 }
 
                                 $_SESSION["userFirstName"] = $userData['firstName'];

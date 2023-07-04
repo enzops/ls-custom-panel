@@ -2,7 +2,7 @@
 include 'config/config.php';
 LimitToAdmins('index.php');
 
-// ADD PRODUCT
+// ADD USER
 if (isset($_POST['submitadd'])) {
     if (!hash_equals($_SESSION['csrf'], $_POST['csrf']))
         die();
@@ -31,7 +31,7 @@ if (isset($_POST['submitadd'])) {
         $messagetype = "error";
     }
 }
-// EDIT PRODUCT
+// EDIT USER
 if (isset($_GET['edit']) and isset($_GET['id'])) {
     $DataRow = LoadDataRow('users', 'id', $_GET['id']);
 
@@ -82,20 +82,53 @@ if (isset($_GET['edit']) and isset($_GET['id'])) {
         }
     }
 }
+// EDIT USER PW
+if (isset($_GET['editpw']) and isset($_GET['id'])) {
+    $DataRow = LoadDataRow('users', 'id', $_GET['id']);
+    if (isset($_POST['submiteditpw'])) {
+        if (!hash_equals($_SESSION['csrf'], $_POST['csrf']))
+            die();
 
+        $user = [
+            "user_id" => $_POST['user_id'],
+            "user_email" => $_POST['user_email'],
+            "user_password" => password_hash($_POST['user_password'], PASSWORD_BCRYPT)
+        ];
+
+        $sql = "UPDATE users 
+                SET password = :user_password,
+                email = :user_email
+                WHERE id = :user_id";
+
+        // Check if password is empty
+        if (empty(trim($_POST["user_password"]))) {
+            $message = "Please enter password.";
+            $messagetype = "danger";
+        } else {
+            $statement = $DB_DSN->prepare($sql);
+            $statement->execute($user);
+        }
+
+        if ($statement) {
+            LoadDataRow('users', 'id', $_GET['id']);
+            $message = "User password edited.";
+            $messagetype = "success";
+        }
+    }
+}
 // DELETE PRODUCT
 if (isset($_GET['delete']) and isset($_GET['id'])) {
 
     $id = $_GET['id'];
 
-    $sql = "DELETE FROM products WHERE id = :id";
+    $sql = "DELETE FROM users WHERE id = :id";
 
     $statement = $DB_DSN->prepare($sql);
     $statement->bindValue(':id', $id);
     $statement->execute();
 
     if ($statement) {
-        LoadDataRow('products', 'id', $_GET['id']);
+        LoadDataRow('users', 'id', $_GET['id']);
         $message = "User deleted.";
         $messagetype = "success";
     }
@@ -107,7 +140,7 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
 <head>
     <?php include 'include/head.php' ?>
     <title>
-        <?= $WebsiteSettings['name'] ?> - Index
+        <?= $WebsiteSettings['name'] ?> - Users
     </title>
 
     <!-- Custom styles for this page -->
@@ -277,95 +310,136 @@ if (isset($_GET['delete']) and isset($_GET['id'])) {
                                 </div>
                             </div>
                         </div>
-                        <!-- Main view -->
-                    <?php else: ?>
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary"></h6>
-                                <div class="dropdown no-arrow">
-                                    <a class="dropdown-toggle"
-                                        href="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>?add" role="button">
-                                        <i class="fas fa-plus fa-sm fa-fw"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Email</th>
-                                                <th>Name</th>
-                                                <th>Level</th>
-                                                <th>Phone</th>
-                                                <th>Active</th>
-                                                <th>Admin</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tfoot>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Email</th>
-                                                <th>Name</th>
-                                                <th>Level</th>
-                                                <th>Phone</th>
-                                                <th>Active</th>
-                                                <th>Admin</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </tfoot>
-                                        <tbody>
-                                            <?php
-                                            LoadAllRows('users');
-                                            foreach ($AllRows as $user):
-                                                ?>
-                                                <tr>
-                                                    <td>
-                                                        <?php echo $user["id"]; ?>
-                                                    </td>
-                                                    <td>
-                                                        <?php echo $user["email"]; ?>
-                                                    </td>
-                                                    <td>
-                                                        <?php echo $user["firstName"]; ?>
-                                                        <?php echo $user["lastName"]; ?>
-                                                    </td>
-                                                    <td>
-                                                        <?php echo $user["level"]; ?>
-                                                    </td>
-                                                    <td>
-                                                        <?php echo $user["phone"]; ?>
-                                                    </td>
-                                                    <td>
-                                                        <?php if ($user["active"] == true): ?> ✅
-                                                        <?php else: ?>❌
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
-                                                        <?php if ($user["admin"] == true): ?> ✅
-                                                        <?php else: ?>❌
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
-                                                        <a href="users.php?edit&id=<?php echo ($user["id"]); ?>"
-                                                            class="btn btn-outline-warning btn-sm"><i
-                                                                class="fas fa-pen"></i></a>
-                                                        <a href="users.php?editpw&id=<?php echo ($user["id"]); ?>"
-                                                            class="btn btn-outline-primary btn-sm"><i
-                                                                class="fas fa-key"></i></a>
-                                                        <a href="users.php?delete&id=<?php echo ($user["id"]); ?>"
-                                                            class="btn btn-outline-danger btn-sm"><i
-                                                                class="fas fa-times"></i></a>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
+                        <?php elseif (isset($_GET['editpw'])): ?>
+                            <div class="col-xl-8">
+                            <!-- Account details card-->
+                            <div class="card mb-4">
+                                <div class="card-header"><?php echo $DataRow['email']; ?> - Change password</div>
+                                <div class="card-body">
+                                    <form method="post">
+                                        <div class="row gx-3 mb-3">
+                                            <!-- Email -->
+                                            <div class="col-md-6">
+                                                <label class="small mb-1" for="user_email">Email</label>
+                                                <input class="form-control" id="user_email" type="text" placeholder="Email"
+                                                    name="user_email" value="<?php echo $DataRow['email']; ?>" readonly>
+                                            </div>
+                                            <!-- Last Name -->
+                                            <div class="col-md-6">
+                                                <label class="small mb-1" for="user_password">New password</label>
+                                                <input class="form-control" id="user_password" type="password"
+                                                    placeholder="New password" name="user_password">
+                                            </div>
+                                        </div>
+
+                                            <!-- Form Row-->
+                                            <div class="row gx-3 mb-3">
+
+                                                <div class="col-md-6">
+                                                    <input type="hidden" class="form-control" id="user_id" type="int"
+                                                        placeholder="ID" name="user_id"
+                                                        value="<?php echo $DataRow['id']; ?>">
+                                                    <input name="csrf" type="hidden" value="<?= $_SESSION['csrf'] ?>">
+                                                </div>
+                                            </div>
+                                            <!-- Save changes button-->
+                                            <button class="btn btn-primary" name="submiteditpw" type="submit"><i
+                                                    class="fas fa-pen"></i> Edit</button>
+                                            <a class="btn btn-warning"
+                                                href="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>"
+                                                role="button"><i class="fa fa-times"></i> Abort</a>
+                                    </form>
                                 </div>
                             </div>
                         </div>
+                        <?php else: ?>
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary"></h6>
+                                    <div class="dropdown no-arrow">
+                                        <a class="dropdown-toggle"
+                                            href="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>?add" role="button">
+                                            <i class="fas fa-plus fa-sm fa-fw"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Email</th>
+                                                    <th>Name</th>
+                                                    <th>Level</th>
+                                                    <th>Phone</th>
+                                                    <th>Active</th>
+                                                    <th>Admin</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tfoot>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Email</th>
+                                                    <th>Name</th>
+                                                    <th>Level</th>
+                                                    <th>Phone</th>
+                                                    <th>Active</th>
+                                                    <th>Admin</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </tfoot>
+                                            <tbody>
+                                                <?php
+                                                LoadAllRows('users');
+                                                foreach ($AllRows as $user):
+                                                    ?>
+                                                    <tr>
+                                                        <td>
+                                                            <?php echo $user["id"]; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php echo $user["email"]; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php echo $user["firstName"]; ?>
+                                                            <?php echo $user["lastName"]; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php echo $user["level"]; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php echo $user["phone"]; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($user["active"] == true): ?> ✅
+                                                            <?php else: ?>❌
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($user["admin"] == true): ?> ✅
+                                                            <?php else: ?>❌
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <a href="users.php?edit&id=<?php echo ($user["id"]); ?>"
+                                                                class="btn btn-outline-warning btn-sm"><i
+                                                                    class="fas fa-pen"></i></a>
+                                                            <a href="users.php?editpw&id=<?php echo ($user["id"]); ?>"
+                                                                class="btn btn-outline-primary btn-sm"><i
+                                                                    class="fas fa-key"></i></a>
+                                                            <a href="users.php?delete&id=<?php echo ($user["id"]); ?>"
+                                                                class="btn btn-outline-danger btn-sm"><i
+                                                                    class="fas fa-times"></i></a>
+                                                        </td>
+                                                    </tr>
+                                            <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                     <?php endif ?>
 
                 </div>

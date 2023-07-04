@@ -1,10 +1,15 @@
 <?php
 include 'config/config.php';
+include 'func/discord.php';
+include 'func/invoices.php';
 
-// ADD PRODUCT
+LimitToUsers('index.php');
+
+// Create Invoice
 if (isset($_POST['submitadd'])) {
     if (!hash_equals($_SESSION['csrf'], $_POST['csrf']))
         die();
+    $date = date("Y-m-d", strtotime("now"));
     $nomsProduits = $_POST['nom_produit'];
     $prixProduits = $_POST['prix_produit'];
     $quantiteProduits = $_POST['quantite_produit'];
@@ -31,10 +36,15 @@ if (isset($_POST['submitadd'])) {
         "invoice_price" => $_POST['invoice_price'],
     ];
 
-    $sqlAddProduct = "INSERT INTO invoices (customerFirstName, customerLastName, employee, description, price, products) VALUES (:invoice_customerfirstname, :invoice_customerLastName, :invoice_employee, :invoice_description, :invoice_price, '$ProductsJSON')";
+    $sqlAddProduct = "INSERT INTO invoices (customerFirstName, customerLastName, employee, description, price, products, date) VALUES (:invoice_customerfirstname, :invoice_customerLastName, :invoice_employee, :invoice_description, :invoice_price, '$ProductsJSON', '$date')";
 
     $statement = $DB_DSN->prepare($sqlAddProduct);
     if ($statement->execute($InvoiceAdd)) {
+        $customer = $_POST['invoice_customerfirstname'] . " " . $_POST['invoice_customerLastName'];
+
+        // Discord notification
+        $invoiceData = newInvoiceJson($WEBSITE_SETTINGS_NAME, $_POST['invoice_employee'], $customer, $produits, $_POST['invoice_price']);
+        sendWebhook($WEBSITE_SETTINGS_DISCORDWEBHOOK, $invoiceData);
         // Update successful
         $message = "User information edited.";
         $messagetype = "success";
@@ -301,6 +311,7 @@ $allProducts = LoadAllRows('products');
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Client</th>
+                                                <th>Date</th>
                                                 <th>Employé</th>
                                                 <th>Description</th>
                                                 <th>Prix</th>
@@ -311,6 +322,7 @@ $allProducts = LoadAllRows('products');
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Client</th>
+                                                <th>Date</th>
                                                 <th>Employé</th>
                                                 <th>Description</th>
                                                 <th>Prix</th>
@@ -331,6 +343,9 @@ $allProducts = LoadAllRows('products');
                                                         <?php echo $product["customerLastName"]; ?>
                                                     </td>
                                                     <td>
+                                                        <?php echo $product["date"]; ?>
+                                                    </td>
+                                                    <td>
                                                         <?php echo $product["employee"]; ?>
                                                     </td>
                                                     <td>
@@ -340,12 +355,18 @@ $allProducts = LoadAllRows('products');
                                                         <?php echo $product["price"]; ?>
                                                     </td>
                                                     <td>
+                                                    <a href="invoices.php?view&id=<?php echo ($product["id"]); ?>"
+                                                            class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i>
+                                                            </a>
                                                         <a href="invoices.php?edit&id=<?php echo ($product["id"]); ?>"
-                                                            class="btn btn-outline-info btn-sm"><i class="fas fa-pen"></i>
-                                                            Edit</a>
+                                                            class="btn btn-outline-warning btn-sm"><i class="fas fa-pen"></i>
+                                                            </a>
                                                         <a href="invoices.php?delete&id=<?php echo ($product["id"]); ?>"
                                                             class="btn btn-outline-danger btn-sm"><i class="fas fa-times"></i>
-                                                            Delete</a>
+                                                            </a>
+                                                            <a href="invoices.php?download&id=<?php echo ($product["id"]); ?>"
+                                                            class="btn btn-outline-dark btn-sm"><i class="fas fa-file-download"></i>
+                                                            </a>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>

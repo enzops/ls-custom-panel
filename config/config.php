@@ -25,7 +25,14 @@ $WebsiteSettings = LoadWebsiteSettings();
 
 
 // FUNCTIONS
-
+/**
+ * This function loads a data row from a table based on the given parameters.
+ *
+ * @param string $table - The name of the table to load data from.
+ * @param string $where - The condition to filter the data (e.g., "id = :id").
+ * @param mixed $id - The value of the identifier used in the WHERE condition.
+ * @return array|false - Returns an associative array representing the loaded data row, or false if an error occurs.
+ */
 function LoadDataRow($table, $where, $id)
 {
   global $DB_SERVER;
@@ -86,6 +93,7 @@ function LoadWebsiteSettings()
   global $DB_DSN;
   global $WEBSITE_SETTINGS_MARGIN;
   global $WEBSITE_SETTINGS_NAME;
+  global $WEBSITE_SETTINGS_DISCORDWEBHOOK;
 
   $LoadWebsiteSettings = $DB_DSN->prepare("SELECT * FROM settings");
   $LoadWebsiteSettings->execute();
@@ -93,6 +101,7 @@ function LoadWebsiteSettings()
 
   $WEBSITE_SETTINGS_NAME = $WebsiteSettings[0]['name'];
   $WEBSITE_SETTINGS_MARGIN = $WebsiteSettings[0]['margin'];
+  $WEBSITE_SETTINGS_DISCORDWEBHOOK = $WebsiteSettings[0]['discordwebhook'];
   // $WEBSITE_SETTINGS_NAME = $WebsiteSettings[0]['lang'];
 
   // require("inc/langs/$WEBSITE_SETTINGS_LANG.php");
